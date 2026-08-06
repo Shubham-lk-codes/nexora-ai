@@ -1,0 +1,742 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String   @id @default(uuid())
+  email             String   @unique
+  phone             String   @unique
+  password          String
+  firstName         String
+  lastName          String
+  avatar            String?
+  role              UserRole @default(CUSTOMER)
+  status            UserStatus @default(ACTIVE)
+  emailVerified     Boolean  @default(false)
+  phoneVerified     Boolean  @default(false)
+  twoFactorEnabled  Boolean  @default(false)
+  twoFactorSecret   String?
+  lastLoginAt       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  customerProfile   CustomerProfile?
+  vendorProfile     VendorProfile?
+  serviceProvider   ServiceProviderProfile?
+  deliveryPartner   DeliveryPartnerProfile?
+  adminProfile      AdminProfile?
+  influencerProfile InfluencerProfile?
+  addresses         Address[]
+  wallet            Wallet?
+  notifications     Notification[]
+  sessions          UserSession[]
+  supportTickets    SupportTicket[]
+  referralsSent     Referral[] @relation("Referrer")
+  referralsReceived Referral[] @relation("Referee")
+  @@map("users")
+}
+
+model CustomerProfile {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dateOfBirth     DateTime?
+  gender          Gender?
+  preferences     Json?
+  loyaltyPoints   Int      @default(0)
+  loyaltyTier     LoyaltyTier @default(BRONZE)
+  totalOrders     Int      @default(0)
+  totalSpent      Decimal  @default(0) @db.Decimal(12, 2)
+  orders          Order[]
+  appointments    Appointment[]
+  reviews         Review[]
+  wishlistItems   WishlistItem[]
+  cartItems       CartItem[]
+  @@map("customer_profiles")
+}
+
+model VendorProfile {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessName        String
+  businessType        BusinessType
+  registrationNumber  String?
+  taxId               String?
+  description         String?  @db.Text
+  logo                String?
+  coverImage          String?
+  status              VendorStatus @default(PENDING)
+  commissionRate      Decimal  @default(10.00) @db.Decimal(5, 2)
+  subscriptionPlan    SubscriptionPlan @default(BASIC)
+  subscriptionExpiry  DateTime?
+  isFeatured          Boolean  @default(false)
+  avgRating           Decimal  @default(0) @db.Decimal(2, 1)
+  totalReviews        Int      @default(0)
+  totalOrders         Int      @default(0)
+  revenue             Decimal  @default(0) @db.Decimal(12, 2)
+  stores              Store[]
+  products            Product[]
+  services            Service[]
+  staff               StaffMember[]
+  campaigns           MarketingCampaign[]
+  @@map("vendor_profiles")
+}
+
+model ServiceProviderProfile {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profession      String
+  bio             String?  @db.Text
+  experienceYears Int      @default(0)
+  hourlyRate      Decimal? @db.Decimal(10, 2)
+  verificationStatus VerificationStatus @default(PENDING)
+  idDocument      String?
+  certificate     String?
+  avgRating       Decimal  @default(0) @db.Decimal(2, 1)
+  totalReviews    Int      @default(0)
+  totalEarnings   Decimal  @default(0) @db.Decimal(12, 2)
+  services        Service[]
+  availability    AvailabilitySlot[]
+  appointments    Appointment[]
+  @@map("service_provider_profiles")
+}
+
+model DeliveryPartnerProfile {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicleType     VehicleType
+  vehicleNumber   String?
+  licenseNumber   String?
+  licenseImage    String?
+  currentLat      Decimal? @db.Decimal(10, 8)
+  currentLng      Decimal? @db.Decimal(11, 8)
+  isOnline        Boolean  @default(false)
+  status          PartnerStatus @default(PENDING)
+  avgRating       Decimal  @default(0) @db.Decimal(2, 1)
+  totalDeliveries Int      @default(0)
+  totalEarnings   Decimal  @default(0) @db.Decimal(12, 2)
+  deliveries      Delivery[]
+  locationHistory LocationHistory[]
+  @@map("delivery_partner_profiles")
+}
+
+model AdminProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department  String?
+  permissions Json?
+  @@map("admin_profiles")
+}
+
+model InfluencerProfile {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  handle          String   @unique
+  platform        SocialPlatform
+  followers       Int      @default(0)
+  engagementRate  Decimal? @db.Decimal(5, 2)
+  niche           String?
+  verificationStatus VerificationStatus @default(PENDING)
+  affiliateCode     String   @unique
+  totalEarnings   Decimal  @default(0) @db.Decimal(12, 2)
+  campaigns       InfluencerCampaign[]
+  @@map("influencer_profiles")
+}
+
+model Address {
+  id          String  @id @default(uuid())
+  userId      String
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label       String
+  addressLine1 String
+  addressLine2 String?
+  city        String
+  state       String
+  country     String  @default("IN")
+  postalCode  String
+  latitude    Decimal @db.Decimal(10, 8)
+  longitude   Decimal @db.Decimal(11, 8)
+  isDefault   Boolean @default(false)
+  orders      Order[]
+  @@map("addresses")
+}
+
+model Store {
+  id          String   @id @default(uuid())
+  vendorId    String
+  vendor      VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  name        String
+  description String?  @db.Text
+  addressLine1 String
+  addressLine2 String?
+  city        String
+  state       String
+  postalCode  String
+  latitude    Decimal  @db.Decimal(10, 8)
+  longitude   Decimal  @db.Decimal(11, 8)
+  phone       String?
+  email       String?
+  isActive    Boolean  @default(true)
+  openTime    String?
+  closeTime   String?
+  openDays    Json?
+  products    Product[]
+  @@map("stores")
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?  @db.Text
+  image       String?
+  parentId    String?
+  parent      Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  level       Int      @default(1)
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  products    Product[]
+  services    Service[]
+  @@map("categories")
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  vendorId    String
+  vendor      VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  storeId     String?
+  store       Store?   @relation(fields: [storeId], references: [id])
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+  name        String
+  slug        String
+  description String   @db.Text
+  sku         String   @unique
+  basePrice   Decimal  @db.Decimal(10, 2)
+  salePrice   Decimal? @db.Decimal(10, 2)
+  costPrice   Decimal? @db.Decimal(10, 2)
+  quantity    Int      @default(0)
+  minOrderQty Int      @default(1)
+  maxOrderQty Int      @default(100)
+  weight      Decimal? @db.Decimal(8, 2)
+  dimensions  Json?
+  images      Json
+  attributes  Json?
+  tags        String[]
+  status      ProductStatus @default(DRAFT)
+  isFeatured  Boolean  @default(false)
+  avgRating   Decimal  @default(0) @db.Decimal(2, 1)
+  totalReviews Int     @default(0)
+  totalSales  Int      @default(0)
+  viewCount   Int      @default(0)
+  searchCount Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  variants    ProductVariant[]
+  inventoryLogs InventoryLog[]
+  orderItems  OrderItem[]
+  reviews     Review[]
+  wishlistItems WishlistItem[]
+  cartItems   CartItem[]
+  @@unique([vendorId, slug])
+  @@map("products")
+}
+
+model ProductVariant {
+  id          String   @id @default(uuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name        String
+  sku         String   @unique
+  price       Decimal  @db.Decimal(10, 2)
+  quantity    Int      @default(0)
+  attributes  Json
+  image       String?
+  isActive    Boolean  @default(true)
+  @@map("product_variants")
+}
+
+model InventoryLog {
+  id          String   @id @default(uuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId   String?
+  type        InventoryAction
+  quantity    Int
+  previousQty Int
+  newQty      Int
+  reason      String?
+  referenceId String?
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  @@map("inventory_logs")
+}
+
+model Service {
+  id              String   @id @default(uuid())
+  vendorId        String?
+  vendor          VendorProfile? @relation(fields: [vendorId], references: [id])
+  providerId      String?
+  provider        ServiceProviderProfile? @relation(fields: [providerId], references: [id])
+  categoryId      String
+  category        Category @relation(fields: [categoryId], references: [id])
+  name            String
+  description     String   @db.Text
+  price           Decimal  @db.Decimal(10, 2)
+  duration        Int
+  bufferTime      Int      @default(0)
+  image           String?
+  isActive        Boolean  @default(true)
+  isFeatured      Boolean  @default(false)
+  avgRating       Decimal  @default(0) @db.Decimal(2, 1)
+  totalReviews    Int      @default(0)
+  totalBookings   Int      @default(0)
+  appointments    Appointment[]
+  reviews         Review[]
+  @@map("services")
+}
+
+model AvailabilitySlot {
+  id          String   @id @default(uuid())
+  providerId  String
+  provider    ServiceProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  dayOfWeek   Int
+  startTime   String
+  endTime     String
+  isAvailable Boolean  @default(true)
+  @@map("availability_slots")
+}
+
+model Appointment {
+  id              String   @id @default(uuid())
+  customerId      String
+  customer        CustomerProfile @relation(fields: [customerId], references: [id])
+  serviceId       String
+  service         Service  @relation(fields: [serviceId], references: [id])
+  providerId      String?
+  provider        ServiceProviderProfile? @relation(fields: [providerId], references: [id])
+  scheduledDate   DateTime @db.Date
+  startTime       String
+  endTime         String
+  status          AppointmentStatus @default(PENDING)
+  notes           String?  @db.Text
+  address         Json?
+  price           Decimal  @db.Decimal(10, 2)
+  platformFee     Decimal  @default(0) @db.Decimal(10, 2)
+  totalAmount     Decimal  @db.Decimal(10, 2)
+  paymentStatus   PaymentStatus @default(PENDING)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  @@map("appointments")
+}
+
+model Order {
+  id              String   @id @default(uuid())
+  orderNumber     String   @unique
+  customerId      String
+  customer        CustomerProfile @relation(fields: [customerId], references: [id])
+  addressId       String
+  address         Address  @relation(fields: [addressId], references: [id])
+  status          OrderStatus @default(PENDING)
+  subtotal        Decimal  @db.Decimal(12, 2)
+  taxAmount       Decimal  @default(0) @db.Decimal(12, 2)
+  deliveryFee     Decimal  @default(0) @db.Decimal(12, 2)
+  platformFee     Decimal  @default(0) @db.Decimal(12, 2)
+  discountAmount  Decimal  @default(0) @db.Decimal(12, 2)
+  totalAmount     Decimal  @db.Decimal(12, 2)
+  paymentMethod   PaymentMethod
+  paymentStatus   PaymentStatus @default(PENDING)
+  transactionId   String?
+  notes           String?  @db.Text
+  scheduledDelivery DateTime?
+  deliveredAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  items           OrderItem[]
+  delivery        Delivery?
+  timeline        OrderTimeline[]
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String   @id @default(uuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id])
+  variantId   String?
+  variantName String?
+  productName String
+  quantity    Int
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  totalPrice  Decimal  @db.Decimal(10, 2)
+  @@map("order_items")
+}
+
+model Delivery {
+  id              String   @id @default(uuid())
+  orderId         String   @unique
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  partnerId       String?
+  partner         DeliveryPartnerProfile? @relation(fields: [partnerId], references: [id])
+  status          DeliveryStatus @default(UNASSIGNED)
+  pickupLat       Decimal  @db.Decimal(10, 8)
+  pickupLng       Decimal  @db.Decimal(11, 8)
+  dropoffLat      Decimal  @db.Decimal(10, 8)
+  dropoffLng      Decimal  @db.Decimal(11, 8)
+  estimatedTime   Int?
+  actualTime      Int?
+  distance        Decimal? @db.Decimal(8, 2)
+  deliveryProof   String?
+  signature       String?
+  notes           String?
+  pickedUpAt      DateTime?
+  deliveredAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  @@map("deliveries")
+}
+
+model LocationHistory {
+  id          String   @id @default(uuid())
+  partnerId   String
+  partner     DeliveryPartnerProfile @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  latitude    Decimal  @db.Decimal(10, 8)
+  longitude   Decimal  @db.Decimal(11, 8)
+  accuracy    Decimal? @db.Decimal(6, 2)
+  recordedAt  DateTime @default(now())
+  @@index([partnerId, recordedAt])
+  @@map("location_history")
+}
+
+model OrderTimeline {
+  id          String   @id @default(uuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status      OrderStatus
+  note        String?
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  @@map("order_timeline")
+}
+
+model Wallet {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance     Decimal  @default(0) @db.Decimal(12, 2)
+  currency    String   @default("INR")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  transactions WalletTransaction[]
+  @@map("wallets")
+}
+
+model WalletTransaction {
+  id          String   @id @default(uuid())
+  walletId    String
+  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  type        TransactionType
+  amount      Decimal  @db.Decimal(12, 2)
+  balance     Decimal  @db.Decimal(12, 2)
+  description String?
+  referenceId String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  @@map("wallet_transactions")
+}
+
+model PaymentTransaction {
+  id              String   @id @default(uuid())
+  orderId         String?
+  appointmentId   String?
+  userId          String
+  amount          Decimal  @db.Decimal(12, 2)
+  currency        String   @default("INR")
+  gateway         PaymentGateway
+  gatewayRef      String?
+  status          PaymentStatus @default(PENDING)
+  method          PaymentMethod
+  metadata        Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  @@map("payment_transactions")
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  customerId  String
+  customer    CustomerProfile @relation(fields: [customerId], references: [id])
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id])
+  serviceId   String?
+  service     Service? @relation(fields: [serviceId], references: [id])
+  vendorId    String?
+  rating      Int
+  title       String?
+  comment     String?  @db.Text
+  images      Json?
+  isVerified  Boolean  @default(false)
+  helpfulCount Int     @default(0)
+  reply       String?  @db.Text
+  replyAt     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@map("reviews")
+}
+
+model CartItem {
+  id          String   @id @default(uuid())
+  customerId  String
+  customer    CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  variantId   String?
+  quantity    Int
+  addedAt     DateTime @default(now())
+  @@unique([customerId, productId, variantId])
+  @@map("cart_items")
+}
+
+model WishlistItem {
+  id          String   @id @default(uuid())
+  customerId  String
+  customer    CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  addedAt     DateTime @default(now())
+  @@unique([customerId, productId])
+  @@map("wishlist_items")
+}
+
+model Coupon {
+  id              String   @id @default(uuid())
+  code            String   @unique
+  description     String?
+  discountType    DiscountType
+  discountValue   Decimal  @db.Decimal(10, 2)
+  minOrderAmount  Decimal? @db.Decimal(10, 2)
+  maxDiscount     Decimal? @db.Decimal(10, 2)
+  usageLimit      Int?
+  usageCount      Int      @default(0)
+  perUserLimit    Int      @default(1)
+  applicableTo    Json?
+  startDate       DateTime
+  endDate         DateTime
+  isActive        Boolean  @default(true)
+  createdBy       String?
+  createdAt       DateTime @default(now())
+  @@map("coupons")
+}
+
+model MarketingCampaign {
+  id          String   @id @default(uuid())
+  vendorId    String
+  vendor      VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  name        String
+  type        CampaignType
+  budget      Decimal  @db.Decimal(12, 2)
+  spent       Decimal  @default(0) @db.Decimal(12, 2)
+  startDate   DateTime
+  endDate     DateTime
+  targetAudience Json?
+  status      CampaignStatus @default(DRAFT)
+  createdAt   DateTime @default(now())
+  @@map("marketing_campaigns")
+}
+
+model InfluencerCampaign {
+  id            String   @id @default(uuid())
+  influencerId  String
+  influencer    InfluencerProfile @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  campaignName  String
+  vendorId      String?
+  affiliateCode String
+  commissionRate Decimal @db.Decimal(5, 2)
+  clicks        Int      @default(0)
+  conversions   Int      @default(0)
+  earnings      Decimal  @default(0) @db.Decimal(12, 2)
+  status        CampaignStatus @default(ACTIVE)
+  startDate     DateTime @default(now())
+  endDate       DateTime?
+  @@map("influencer_campaigns")
+}
+
+model Franchise {
+  id              String   @id @default(uuid())
+  name            String
+  ownerId         String
+  territory       String
+  territoryBounds Json?
+  commissionRate  Decimal  @default(5.00) @db.Decimal(5, 2)
+  monthlyTarget   Decimal? @db.Decimal(12, 2)
+  status          FranchiseStatus @default(ACTIVE)
+  createdAt       DateTime @default(now())
+  subFranchises   Franchise[] @relation("FranchiseHierarchy")
+  parentId        String?
+  parent          Franchise? @relation("FranchiseHierarchy", fields: [parentId], references: [id])
+  @@map("franchises")
+}
+
+model SupportTicket {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  subject     String
+  description String   @db.Text
+  category    String
+  priority    Priority @default(MEDIUM)
+  status      TicketStatus @default(OPEN)
+  assignedTo  String?
+  resolvedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@map("support_tickets")
+}
+
+model ChatMessage {
+  id          String   @id @default(uuid())
+  senderId    String
+  receiverId  String
+  orderId     String?
+  message     String   @db.Text
+  messageType MessageType @default(TEXT)
+  mediaUrl    String?
+  isRead      Boolean  @default(false)
+  readAt      DateTime?
+  createdAt   DateTime @default(now())
+  @@index([senderId, receiverId, createdAt])
+  @@map("chat_messages")
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  body        String
+  type        NotificationType
+  data        Json?
+  isRead      Boolean  @default(false)
+  sentVia     Json?
+  createdAt   DateTime @default(now())
+  @@map("notifications")
+}
+
+model SearchLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  query       String
+  filters     Json?
+  resultsCount Int
+  clickedResults Json?
+  createdAt   DateTime @default(now())
+  @@index([query, createdAt])
+  @@map("search_logs")
+}
+
+model AIInsight {
+  id          String   @id @default(uuid())
+  entityType  String
+  entityId    String
+  insightType String
+  data        Json
+  confidence  Decimal? @db.Decimal(3, 2)
+  createdAt   DateTime @default(now())
+  @@map("ai_insights")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  action      String
+  entityType  String
+  entityId    String?
+  oldValue    Json?
+  newValue    Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  @@index([entityType, entityId, createdAt])
+  @@map("audit_logs")
+}
+
+model Referral {
+  id          String   @id @default(uuid())
+  referrerId  String
+  referrer    User     @relation("Referrer", fields: [referrerId], references: [id])
+  refereeId   String   @unique
+  referee     User     @relation("Referee", fields: [refereeId], references: [id])
+  code        String
+  rewardAmount Decimal @default(0) @db.Decimal(10, 2)
+  isRewarded  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  @@map("referrals")
+}
+
+model UserSession {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token       String   @unique
+  deviceInfo  Json?
+  ipAddress   String?
+  isActive    Boolean  @default(true)
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  @@map("user_sessions")
+}
+
+model StaffMember {
+  id          String   @id @default(uuid())
+  vendorId    String
+  vendor      VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  name        String
+  email       String?
+  phone       String?
+  role        String
+  permissions Json?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  @@map("staff_members")
+}
+
+enum UserRole { CUSTOMER VENDOR SERVICE_PROVIDER DELIVERY_PARTNER ADMIN SUPER_ADMIN INFLUENCER }
+enum UserStatus { ACTIVE INACTIVE SUSPENDED PENDING_VERIFICATION }
+enum Gender { MALE FEMALE OTHER PREFER_NOT_TO_SAY }
+enum LoyaltyTier { BRONZE SILVER GOLD PLATINUM DIAMOND }
+enum BusinessType { GROCERY RESTAURANT PHARMACY ELECTRONICS FASHION BEAUTY_SALON HOME_SERVICES ELECTRICAL PLUMBING CARPENTRY AC_REPAIR HEALTHCARE EDUCATION REAL_ESTATE AUTOMOBILE LAUNDRY PET_CARE AGRICULTURE MANUFACTURING OTHER }
+enum VendorStatus { PENDING APPROVED REJECTED SUSPENDED }
+enum SubscriptionPlan { BASIC STANDARD PREMIUM ENTERPRISE }
+enum VerificationStatus { PENDING VERIFIED REJECTED }
+enum PartnerStatus { PENDING ACTIVE SUSPENDED OFFLINE }
+enum VehicleType { BICYCLE BIKE SCOOTER CAR VAN TRUCK }
+enum SocialPlatform { INSTAGRAM YOUTUBE TIKTOK TWITTER FACEBOOK }
+enum ProductStatus { DRAFT ACTIVE OUT_OF_STOCK DISCONTINUED UNDER_REVIEW }
+enum InventoryAction { STOCK_IN STOCK_OUT ADJUSTMENT RETURN DAMAGED }
+enum AppointmentStatus { PENDING CONFIRMED IN_PROGRESS COMPLETED CANCELLED NO_SHOW RESCHEDULED }
+enum OrderStatus { PENDING CONFIRMED PROCESSING READY_FOR_PICKUP OUT_FOR_DELIVERY DELIVERED CANCELLED REFUNDED RETURNED }
+enum DeliveryStatus { UNASSIGNED ASSIGNED ACCEPTED REJECTED AT_PICKUP PICKED_UP IN_TRANSIT AT_DROP_OFF DELIVERED FAILED }
+enum PaymentStatus { PENDING PROCESSING COMPLETED FAILED REFUNDED PARTIALLY_REFUNDED }
+enum PaymentMethod { CASH_ON_DELIVERY CREDIT_CARD DEBIT_CARD UPI WALLET NET_BANKING PAYPAL STRIPE RAZORPAY }
+enum PaymentGateway { RAZORPAY STRIPE PAYPAL CASH WALLET }
+enum TransactionType { CREDIT DEBIT REFUND COMMISSION PAYOUT REWARD REFERRAL }
+enum DiscountType { PERCENTAGE FIXED_AMOUNT FREE_DELIVERY BUY_X_GET_Y }
+enum CampaignType { BANNER SPONSORED_LISTING PUSH_NOTIFICATION EMAIL_CAMPAIGN SOCIAL_MEDIA }
+enum CampaignStatus { DRAFT ACTIVE PAUSED COMPLETED CANCELLED }
+enum FranchiseStatus { ACTIVE INACTIVE TERMINATED }
+enum Priority { LOW MEDIUM HIGH CRITICAL }
+enum TicketStatus { OPEN IN_PROGRESS RESOLVED CLOSED ESCALATED }
+enum MessageType { TEXT IMAGE VIDEO AUDIO DOCUMENT LOCATION }
+enum NotificationType { ORDER_UPDATE DELIVERY_UPDATE APPOINTMENT_REMINDER PROMOTION PAYMENT CHAT SYSTEM REFERRAL REVIEW }

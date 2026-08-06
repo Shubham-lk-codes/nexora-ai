@@ -1,0 +1,106 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: ../backend
+      dockerfile: ../docker/Dockerfile.api
+    container_name: nexora-api
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:nexora123@postgres:5432/nexora?schema=public
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+    depends_on:
+      - postgres
+      - redis
+      - elasticsearch
+    networks:
+      - nexora-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: nexora-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: nexora123
+      POSTGRES_DB: nexora
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - nexora-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: nexora-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - nexora-network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: nexora-elasticsearch
+    restart: always
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - nexora-network
+
+  web-admin:
+    build:
+      context: ../web-admin
+      dockerfile: ../docker/Dockerfile.web
+    container_name: nexora-web-admin
+    restart: always
+    ports:
+      - "3001:80"
+    networks:
+      - nexora-network
+
+  web-vendor:
+    build:
+      context: ../web-vendor
+      dockerfile: ../docker/Dockerfile.web
+    container_name: nexora-web-vendor
+    restart: always
+    ports:
+      - "3002:80"
+    networks:
+      - nexora-network
+
+  web-customer:
+    build:
+      context: ../web-customer
+      dockerfile: ../docker/Dockerfile.web
+    container_name: nexora-web-customer
+    restart: always
+    ports:
+      - "3003:80"
+    networks:
+      - nexora-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  es_data:
+
+networks:
+  nexora-network:
+    driver: bridge
