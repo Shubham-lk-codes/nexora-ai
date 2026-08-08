@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
+import type { Request, Response } from 'express';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
@@ -27,6 +28,12 @@ async function bootstrap() {
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: 'Content-Type, Accept, Authorization, X-Requested-With',
+  });
+
+  // Health check for Render / load balancers (before versioning prefix)
+  const httpAdapter = app.getHttpAdapter();
+  httpAdapter.get('/health', (_req: Request, res: Response) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
   // API Versioning

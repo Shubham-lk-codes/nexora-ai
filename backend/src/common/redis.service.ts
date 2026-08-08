@@ -53,6 +53,7 @@ export class RedisService {
   }
 
   async geoRadius(key: string, longitude: number, latitude: number, radius: number, unit: 'km' | 'm' = 'km'): Promise<string[]> {
-    return this.client.georadius(key, longitude, latitude, radius, unit, 'WITHDIST');
+    const result = await this.client.georadius(key, longitude, latitude, radius, unit, 'WITHDIST');
+    return result as string[];
   }
 }

@@ -1,3 +1,5 @@
+import { ProductStatus } from '@prisma/client';
+
 export class CreateProductDto {
   name: string;
   description: string;
@@ -23,7 +25,7 @@ export class UpdateProductDto {
   salePrice?: number;
   quantity?: number;
   images?: string[];
-  status?: string;
+  status?: ProductStatus;
   isFeatured?: boolean;
 }
 
