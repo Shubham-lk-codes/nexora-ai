@@ -3,7 +3,7 @@ import { PrismaService } from '../common/prisma.service';
 import { RedisService } from '../common/redis.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CreateOrderDto, UpdateOrderStatusDto } from './dto';
-import { OrderStatus, PaymentStatus } from '@prisma/client';
+import { OrderStatus, PaymentMethod, PaymentStatus } from '@prisma/client';
 
 @Injectable()
 export class OrdersService {
@@ -47,7 +47,7 @@ export class OrdersService {
         platformFee: subtotal * 0.02,
         discountAmount: dto.discountAmount || 0,
         totalAmount: subtotal + (subtotal * 0.18) + (dto.deliveryFee || 0) + (subtotal * 0.02) - (dto.discountAmount || 0),
-        paymentMethod: dto.paymentMethod,
+        paymentMethod: dto.paymentMethod as PaymentMethod,
         items: { create: orderItems },
         timeline: { create: { status: OrderStatus.PENDING, note: 'Order placed' } },
       },

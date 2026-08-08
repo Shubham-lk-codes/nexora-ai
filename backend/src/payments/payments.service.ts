@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../common/prisma.service';
 import { CreatePaymentDto, WalletTopupDto } from './dto';
 import { PaymentStatus, TransactionType } from '@prisma/client';
-
+import { PaymentGateway, PaymentMethod } from '@prisma/client';
 @Injectable()
 export class PaymentsService {
   constructor(private prisma: PrismaService, private config: ConfigService) {}
@@ -15,8 +15,8 @@ export class PaymentsService {
         orderId: dto.orderId,
         amount: dto.amount,
         currency: 'INR',
-        gateway: dto.gateway,
-        method: dto.method,
+        gateway: dto.gateway as PaymentGateway,
+       method: dto.method as PaymentMethod,
         status: PaymentStatus.PENDING,
       },
     });

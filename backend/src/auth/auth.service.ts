@@ -33,7 +33,8 @@ export class AuthService {
         password: hashedPassword,
         firstName: dto.firstName,
         lastName: dto.lastName,
-        role: dto.role || UserRole.CUSTOMER,
+        // role: dto.role || UserRole.CUSTOMER,
+        role: (dto.role as UserRole) || UserRole.CUSTOMER,
         status: UserStatus.PENDING_VERIFICATION,
       },
     });
