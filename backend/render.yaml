@@ -4,14 +4,10 @@ services:
     runtime: node
     region: oregon
     plan: free
+    rootDir: backend
 
-    # Build step: install deps, generate Prisma client, compile TypeScript
-    buildCommand: npm install && npx prisma generate && npm run build
-
-    # Start the compiled output
+    buildCommand: npm ci && npx prisma generate && npm run build
     startCommand: node dist/main
-
-    # Health check path (adjust if you have a different health endpoint)
     healthCheckPath: /health
 
     envVars:
@@ -19,8 +15,6 @@ services:
         value: production
       - key: PORT
         value: 3000
-
-      # Set these in the Render dashboard (mark as secret):
       - key: DATABASE_URL
         sync: false
       - key: REDIS_URL
