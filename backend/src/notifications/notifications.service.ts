@@ -6,9 +6,10 @@ import * as admin from 'firebase-admin';
 @Injectable()
 export class NotificationsService {
   constructor(private prisma: PrismaService, private config: ConfigService) {
-    if (!admin.apps.length) {
+    const serviceAccount = JSON.parse(this.config.get('FIREBASE_SERVICE_ACCOUNT') || '{}');
+    if (!admin.apps.length && serviceAccount.project_id) {
       admin.initializeApp({
-        credential: admin.credential.cert(JSON.parse(this.config.get('FIREBASE_SERVICE_ACCOUNT') || '{}')),
+        credential: admin.credential.cert(serviceAccount),
       });
     }
   }

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Typography, Paper, Box, Chip } from '@mui/material';
 
 export default function Orders() {

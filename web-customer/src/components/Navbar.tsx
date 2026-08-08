@@ -1,4 +1,3 @@
-import React from 'react';
 import { AppBar, Toolbar, Typography, Box, IconButton, Badge, Button } from '@mui/material';
 import { ShoppingCart, Search, AccountCircle } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';

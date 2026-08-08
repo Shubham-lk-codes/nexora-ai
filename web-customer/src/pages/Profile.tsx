@@ -1,5 +1,4 @@
-import React from 'react';
-import { Typography, Paper, Box, Avatar, Button, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
+import { Typography, Paper, Box, Avatar, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
 import { LocationOn, Payment, Loyalty, Settings } from '@mui/icons-material';
 
 export default function Profile() {

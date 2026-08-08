@@ -1,4 +1,3 @@
-import React from 'react';
 import { Typography, Paper, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 
 export default function Products() {

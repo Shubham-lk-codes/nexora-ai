@@ -1,4 +1,3 @@
-import React from 'react';
 import { Typography, Paper, Box, Button, Divider } from '@mui/material';
 
 export default function Cart() {

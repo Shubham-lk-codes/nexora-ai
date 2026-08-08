@@ -1,4 +1,3 @@
-import React from 'react';
 import { useParams } from 'react-router-dom';
 import { Typography, Box, Button, Paper, Grid } from '@mui/material';
 import { ShoppingCart, Favorite } from '@mui/icons-material';

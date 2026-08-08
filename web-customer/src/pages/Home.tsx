@@ -1,4 +1,3 @@
-import React from 'react';
 import { Typography, Grid, Card, CardMedia, CardContent, Box, TextField, InputAdornment } from '@mui/material';
 import { Search } from '@mui/icons-material';
 
