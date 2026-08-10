@@ -51,3 +51,5 @@ services:
         sync: false
       - key: SMTP_PASS
         sync: false
+      - key: CORS_ORIGIN
+        value: "https://nexora-ai-six-sable.vercel.app,https://nexora-ai-vendor.vercel.app,https://nexora-ai-customer.vercel.app"

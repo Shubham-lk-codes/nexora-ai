@@ -22,9 +22,23 @@ async function bootstrap() {
   app.use(compression());
   app.use(morgan('combined'));
 
-  // CORS
+  // CORS — supports comma-separated list of origins in CORS_ORIGIN env var
+  const corsOriginEnv = configService.get<string>('CORS_ORIGIN') || '*';
+  const allowedOrigins =
+    corsOriginEnv === '*'
+      ? '*'
+      : corsOriginEnv.split(',').map((o) => o.trim());
+
   app.enableCors({
-    origin: configService.get('CORS_ORIGIN') || '*',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, Postman, server-to-server)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins === '*') return callback(null, true);
+      if ((allowedOrigins as string[]).includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS: origin ${origin} not allowed`), false);
+    },
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: 'Content-Type, Accept, Authorization, X-Requested-With',
